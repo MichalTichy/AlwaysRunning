@@ -51,12 +51,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AliveCheckJob.cs" />
     <Compile Include="AlwaysRunning.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="AlwaysRunning.Designer.cs">
       <DependentUpon>AlwaysRunning.cs</DependentUpon>
     </Compile>
+    <Compile Include="Configuration\AppInfoCollection.cs" />
+    <Compile Include="Configuration\AppInfoConfigurationSection.cs" />
+    <Compile Include="ApplicationLoader.cs" />
+    <Compile Include="Configuration\AppInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
