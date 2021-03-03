@@ -1,35 +1,39 @@
-﻿using System.Collections.Generic;
+﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Quartz;
+using Quartz.Impl.Matchers;
 
 namespace AlwaysRunning
 {
     [DisallowConcurrentExecution]
     internal class AliveCheckJob : IJob
     {
-        static Dictionary<AppInfo, int> RegisteredApplications = new Dictionary<AppInfo, int>();
-
-        public static void RegisterApplication(AppInfo appInfo)
-        {
-
-            if (!RegisteredApplications.ContainsKey(appInfo))
-            {
-                RegisteredApplications.Add(appInfo, 0);
-            }
-        }
 
         public Task Execute(IJobExecutionContext context)
         {
-            var notRunning = RegisteredApplications.Where(t => t.Value == 0 || !IsProcessRunning(t.Value));
-            foreach (var applicationInfo in notRunning.Select(t => t.Key))
+            var jobDetailKey = context.JobDetail.Key;
+            var rnd = new Random();
+            var applicationRegister = (ApplicationRegister)context.Scheduler.Context.Get(nameof(ApplicationRegister));
+            var notRunning = applicationRegister.Where(t => t.ProcessId <= 0 || !IsProcessRunning(t.ProcessId));
+            foreach (var applicationInfo in notRunning)
             {
-
                 ApplicationLoader.PROCESS_INFORMATION processInfo;
                 ApplicationLoader.StartProcessAndBypassUAC(applicationInfo, out processInfo);
                 var processId = (int)processInfo.dwProcessId;
-                RegisteredApplications[applicationInfo] = processId;
+                applicationInfo.ProcessId = processId;
+
+                if (applicationInfo.TimeBetweenRestartsInMinutes != null)
+                {
+                    applicationInfo.NextRestart = DateTime.Now.AddMinutes(applicationInfo.TimeBetweenRestartsInMinutes.Value);
+
+                    if (applicationInfo.RestartVarianceInMinutes.HasValue)
+                    {
+                        applicationInfo.NextRestart = applicationInfo.NextRestart.Value.AddMinutes(rnd.Next(-applicationInfo.RestartVarianceInMinutes.Value, applicationInfo.RestartVarianceInMinutes.Value));
+                    }
+                }
             }
 
             return Task.FromResult(false);

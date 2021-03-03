@@ -61,6 +61,7 @@
     <Compile Include="AlwaysRunning.Designer.cs">
       <DependentUpon>AlwaysRunning.cs</DependentUpon>
     </Compile>
+    <Compile Include="ApplicationRegister.cs" />
     <Compile Include="Configuration\AppInfoCollection.cs" />
     <Compile Include="Configuration\AppInfoConfigurationSection.cs" />
     <Compile Include="ApplicationLoader.cs" />
@@ -73,6 +74,7 @@
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RestartAppsJob.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

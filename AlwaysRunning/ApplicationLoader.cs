@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Security;
 
@@ -280,7 +281,7 @@ namespace AlwaysRunning
                 false,                  // handles are not inheritable
                 dwCreationFlags,        // creation flags
                 IntPtr.Zero,            // pointer to new environment block 
-                appInfo.WorkSpace,                   // name of current directory 
+                appInfo.WorkSpace ?? Path.GetDirectoryName(appInfo.Path),                   // name of current directory 
                 ref si,                 // pointer to STARTUPINFO structure
                 out procInfo            // receives information about new process
             );

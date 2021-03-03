@@ -27,27 +27,50 @@ namespace AlwaysRunning
 
         public void Start()
         {
+            var appsRegister = new ApplicationRegister();
+
+            RegisterApps(appsRegister);
+
+            InitQuartz().GetAwaiter().GetResult();
+            Scheduler.Context.Put(nameof(ApplicationRegister), appsRegister);
+
             SetupQuartz().GetAwaiter().GetResult();
 
-            RegisterApps();
         }
 
-        private static void RegisterApps()
+        private static void RegisterApps(ApplicationRegister appsRegister)
         {
             AppInfoConfigurationSection serviceConfigSection =
                 ConfigurationManager.GetSection("AppsSection") as AppInfoConfigurationSection;
 
+
             foreach (AppInfo appInfo in serviceConfigSection.Apps)
             {
-                AliveCheckJob.RegisterApplication(appInfo);
+                appsRegister.Add(appInfo);
             }
         }
 
         private async Task SetupQuartz()
         {
-            await InitQuartz();
             await ScheduleAliveChecks();
+            await ScheduleRestarts();
             await Scheduler.Start();
+        }
+
+        private async Task ScheduleRestarts()
+        {
+
+            IJobDetail job = JobBuilder.Create<RestartAppsJob>()
+                .Build();
+
+            ITrigger trigger = TriggerBuilder.Create()
+                .WithSimpleSchedule(builder =>
+                    builder.WithInterval(TimeSpan.FromSeconds(30))
+                        .RepeatForever()
+                        .WithMisfireHandlingInstructionIgnoreMisfires())
+                .StartNow()
+                .Build();
+            await Scheduler.ScheduleJob(job, trigger);
         }
 
         private async Task ScheduleAliveChecks()
@@ -56,6 +79,7 @@ namespace AlwaysRunning
 
             IJobDetail job = JobBuilder.Create<AliveCheckJob>()
                 .Build();
+
             ITrigger trigger = TriggerBuilder.Create()
                 .WithSimpleSchedule(builder =>
                     builder.WithInterval(TimeSpan.FromSeconds(interval))
